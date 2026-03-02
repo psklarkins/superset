@@ -56,6 +56,8 @@ export function ChatMastraInterface({
 	workspaceId,
 	organizationId,
 	cwd,
+	isSessionReady,
+	ensureSessionReady,
 	onStartFreshSession,
 	onRawSnapshotChange,
 }: ChatMastraInterfaceProps) {
@@ -290,6 +292,16 @@ export function ChatMastraInterface({
 				targetSessionId = startResult.sessionId;
 			}
 
+			if (sessionId && targetSessionId === sessionId && !isSessionReady) {
+				const ensured = await ensureSessionReady();
+				if (!ensured) {
+					const persistErrorMessage =
+						"Chat session failed to initialize. Please wait a moment and retry.";
+					setRuntimeErrorMessage(persistErrorMessage);
+					throw new Error(persistErrorMessage);
+				}
+			}
+
 			try {
 				if (sessionId && targetSessionId === sessionId) {
 					await commands.sendMessage(sendInput);
@@ -322,9 +334,11 @@ export function ChatMastraInterface({
 			clearRuntimeError,
 			commands,
 			messages?.length,
+			isSessionReady,
 			onStartFreshSession,
 			organizationId,
 			resolveSlashCommandInput,
+			ensureSessionReady,
 			sendMessageToSession,
 			sessionId,
 			setRuntimeErrorMessage,

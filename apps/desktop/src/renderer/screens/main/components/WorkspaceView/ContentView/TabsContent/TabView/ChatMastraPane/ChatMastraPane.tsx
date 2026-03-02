@@ -371,6 +371,40 @@ export function ChatMastraPane({
 		[organizationId, paneId, sessionId, switchChatMastraSession, workspaceId],
 	);
 
+	const ensureCurrentSessionRecord = useCallback(async (): Promise<boolean> => {
+		if (!sessionId || !organizationId) return false;
+		if (hasCurrentSessionRecord) return true;
+
+		const ensureKey = `${organizationId}:${workspaceId}:${sessionId}:manual`;
+		ensureSessionRecordRef.current = ensureKey;
+		setIsSessionInitializing(true);
+
+		try {
+			await createSessionRecord({
+				sessionId,
+				organizationId,
+				workspaceId,
+			});
+			if (ensureSessionRecordRef.current !== ensureKey) return false;
+			sessionInitRetryCountRef.current = 0;
+			setIsSessionInitializing(false);
+			return true;
+		} catch (error) {
+			if (ensureSessionRecordRef.current !== ensureKey) return false;
+			reportChatMastraError({
+				operation: "session.create",
+				error,
+				sessionId,
+				workspaceId,
+				paneId,
+				organizationId,
+			});
+			ensureSessionRecordRef.current = null;
+			setIsSessionInitializing(false);
+			return false;
+		}
+	}, [hasCurrentSessionRecord, organizationId, paneId, sessionId, workspaceId]);
+
 	useEffect(() => {
 		if (!sessionId || !organizationId) return;
 		if (hasCurrentSessionRecord) {
@@ -379,6 +413,7 @@ export function ChatMastraPane({
 				clearTimeout(sessionInitRetryTimeoutRef.current);
 				sessionInitRetryTimeoutRef.current = null;
 			}
+			ensureSessionRecordRef.current = null;
 			setIsSessionInitializing(false);
 			return;
 		}
@@ -394,10 +429,12 @@ export function ChatMastraPane({
 			workspaceId,
 		})
 			.then(() => {
+				if (ensureSessionRecordRef.current !== ensureKey) return;
 				sessionInitRetryCountRef.current = 0;
 				setIsSessionInitializing(false);
 			})
 			.catch((error) => {
+				if (ensureSessionRecordRef.current !== ensureKey) return;
 				reportChatMastraError({
 					operation: "session.create",
 					error,
@@ -411,6 +448,7 @@ export function ChatMastraPane({
 				sessionInitRetryCountRef.current = nextRetry;
 				if (nextRetry <= SESSION_INIT_MAX_RETRIES) {
 					sessionInitRetryTimeoutRef.current = setTimeout(() => {
+						if (ensureSessionRecordRef.current !== ensureKey) return;
 						sessionInitRetryTimeoutRef.current = null;
 						setSessionInitRetryToken((token) => token + 1);
 					}, SESSION_INIT_RETRY_DELAY_MS);
@@ -555,6 +593,8 @@ export function ChatMastraPane({
 								workspaceId={workspaceId}
 								organizationId={organizationId}
 								cwd={workspace?.worktreePath ?? ""}
+								isSessionReady={hasCurrentSessionRecord}
+								ensureSessionReady={ensureCurrentSessionRecord}
 								onStartFreshSession={handleStartFreshSession}
 								onRawSnapshotChange={
 									showDevToolbarActions ? handleRawSnapshotChange : undefined

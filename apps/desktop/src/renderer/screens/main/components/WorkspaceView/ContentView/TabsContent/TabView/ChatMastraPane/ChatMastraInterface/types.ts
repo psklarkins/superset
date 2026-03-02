@@ -13,6 +13,8 @@ export interface ChatMastraInterfaceProps {
 	workspaceId: string;
 	organizationId: string | null;
 	cwd: string;
+	isSessionReady: boolean;
+	ensureSessionReady: () => Promise<boolean>;
 	onStartFreshSession: () => Promise<{
 		created: boolean;
 		sessionId?: string;
