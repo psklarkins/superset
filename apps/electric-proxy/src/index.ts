@@ -15,8 +15,28 @@ function corsResponse(status: number, body: string): Response {
 	return new Response(body, { status, headers: CORS_HEADERS });
 }
 
+function addCorsHeaders(response: Response): Response {
+	const headers = new Headers(response.headers);
+	if (headers.get("content-encoding")) {
+		headers.delete("content-encoding");
+		headers.delete("content-length");
+	}
+	for (const [key, value] of Object.entries(CORS_HEADERS)) {
+		headers.set(key, value);
+	}
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
+}
+
 export default {
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(
+		request: Request,
+		env: Env,
+		ctx: ExecutionContext,
+	): Promise<Response> {
 		if (request.method === "OPTIONS") {
 			return new Response(null, { status: 204, headers: CORS_HEADERS });
 		}
@@ -65,23 +85,26 @@ export default {
 
 		const upstreamUrl = buildUpstreamUrl(url, tableName, whereClause, env);
 
-		const response = await fetch(upstreamUrl.toString(), {
-			cf: { cacheEverything: true },
-		});
+		// Use the Worker's own URL as the cache key (required for Cache API).
+		// Strip organizationId since it's already encoded in the where clause
+		// sent upstream — the rest of the params (table, offset, handle, etc.)
+		// naturally deduplicate requests from the same org.
+		const cacheUrl = new URL(request.url);
+		cacheUrl.searchParams.delete("organizationId");
+		const cacheKey = new Request(cacheUrl.toString());
 
-		const headers = new Headers(response.headers);
-		if (headers.get("content-encoding")) {
-			headers.delete("content-encoding");
-			headers.delete("content-length");
-		}
-		for (const [key, value] of Object.entries(CORS_HEADERS)) {
-			headers.set(key, value);
+		const cache = caches.default;
+		const cached = await cache.match(cacheKey);
+		if (cached) {
+			return addCorsHeaders(cached);
 		}
 
-		return new Response(response.body, {
-			status: response.status,
-			statusText: response.statusText,
-			headers,
-		});
+		const response = await fetch(upstreamUrl.toString());
+
+		if (response.ok && response.headers.has("cache-control")) {
+			ctx.waitUntil(cache.put(cacheKey, response.clone()));
+		}
+
+		return addCorsHeaders(response);
 	},
 } satisfies ExportedHandler<Env>;
