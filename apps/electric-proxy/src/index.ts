@@ -31,6 +31,13 @@ function addCorsHeaders(response: Response): Response {
 	});
 }
 
+// Global in-flight map for request coalescing.
+// Workers on the same edge node share the isolate, so concurrent requests
+// for the same shape+offset are collapsed into a single upstream fetch.
+// We store the original Response promise — each consumer calls .clone()
+// on it, leaving the original unconsumed so further clones are safe.
+const inflight = new Map<string, Promise<Response>>();
+
 export default {
 	async fetch(
 		request: Request,
@@ -85,10 +92,9 @@ export default {
 
 		const upstreamUrl = buildUpstreamUrl(url, tableName, whereClause, env);
 
-		// Use the Worker's own URL as the cache key (required for Cache API).
-		// organizationId must stay in the key to prevent cross-tenant cache sharing.
-		// For auth.organizations (no organizationId param), the where clause depends
-		// on the user's JWT org list, so add a stable derivative to scope the cache.
+		// Cache key uses the Worker's own URL to stay in-zone for the Cache API.
+		// organizationId stays in the key to prevent cross-tenant cache sharing.
+		// For auth.organizations (no organizationId param), scope by JWT org list.
 		const cacheUrl = new URL(request.url);
 		if (tableName === "auth.organizations") {
 			cacheUrl.searchParams.set(
@@ -98,15 +104,30 @@ export default {
 		}
 		const cacheKey = new Request(cacheUrl.toString());
 
+		// 1. Check Cache API (serves previously-cached responses)
 		const cache = caches.default;
 		const cached = await cache.match(cacheKey);
 		if (cached) {
 			return addCorsHeaders(cached);
 		}
 
-		const response = await fetch(upstreamUrl.toString());
+		// 2. Request coalescing — if an identical upstream fetch is already
+		//    in-flight on this edge node, piggyback on it instead of making
+		//    a duplicate request to Electric.
+		const coalescingKey = upstreamUrl.toString();
+		let fetchPromise = inflight.get(coalescingKey);
+		const isOriginator = !fetchPromise;
 
-		if (response.ok && response.headers.has("cache-control")) {
+		if (!fetchPromise) {
+			fetchPromise = fetch(coalescingKey);
+			inflight.set(coalescingKey, fetchPromise);
+			fetchPromise.finally(() => inflight.delete(coalescingKey));
+		}
+
+		const response = (await fetchPromise).clone();
+
+		// Only the originator writes to cache to avoid duplicate puts
+		if (isOriginator && response.ok && response.headers.has("cache-control")) {
 			ctx.waitUntil(cache.put(cacheKey, response.clone()));
 		}
 
