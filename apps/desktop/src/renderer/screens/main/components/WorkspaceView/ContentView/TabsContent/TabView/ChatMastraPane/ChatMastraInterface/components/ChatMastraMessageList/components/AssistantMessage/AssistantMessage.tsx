@@ -8,6 +8,8 @@ import { StreamingMessageText } from "../../../../../../ChatPane/ChatInterface/c
 import { ReasoningBlock } from "../../../../../../ChatPane/ChatInterface/components/ReasoningBlock";
 import type { ToolPart } from "../../../../../../ChatPane/ChatInterface/utils/tool-helpers";
 import { normalizeToolName } from "../../../../../../ChatPane/ChatInterface/utils/tool-helpers";
+import { PendingPlanApprovalMessage } from "../PendingPlanApprovalMessage";
+import { SubagentExecutionMessage } from "../SubagentExecutionMessage";
 
 type MastraMessage = NonNullable<
 	UseMastraChatDisplayReturn["messages"]
@@ -15,6 +17,15 @@ type MastraMessage = NonNullable<
 type MastraMessageContent = MastraMessage["content"][number];
 type MastraToolCall = Extract<MastraMessageContent, { type: "tool_call" }>;
 type MastraToolResult = Extract<MastraMessageContent, { type: "tool_result" }>;
+type MastraPendingPlanApproval =
+	UseMastraChatDisplayReturn["pendingPlanApproval"];
+type MastraActiveSubagents = NonNullable<
+	UseMastraChatDisplayReturn["activeSubagents"]
+>;
+type MastraActiveSubagent =
+	MastraActiveSubagents extends Map<string, infer SubagentState>
+		? SubagentState
+		: never;
 
 interface AssistantMessageProps {
 	message: MastraMessage;
@@ -25,6 +36,14 @@ interface AssistantMessageProps {
 	workspaceCwd?: string;
 	previewToolParts?: ToolPart[];
 	footer?: ReactNode;
+	activeSubagentsByToolCallId?: Map<string, MastraActiveSubagent>;
+	pendingPlanApproval?: MastraPendingPlanApproval;
+	pendingPlanToolCallId?: string | null;
+	isPlanSubmitting?: boolean;
+	onPlanRespond?: (response: {
+		action: "approved" | "rejected";
+		feedback?: string;
+	}) => Promise<void>;
 }
 
 function ImagePart({ data, mimeType }: { data: string; mimeType: string }) {
@@ -98,9 +117,49 @@ export function AssistantMessage({
 	workspaceCwd,
 	previewToolParts = [],
 	footer,
+	activeSubagentsByToolCallId,
+	pendingPlanApproval,
+	pendingPlanToolCallId = null,
+	isPlanSubmitting = false,
+	onPlanRespond,
 }: AssistantMessageProps) {
 	const nodes: ReactNode[] = [];
 	const renderedToolCallIds = new Set<string>();
+	let didRenderPendingPlanApproval = false;
+	const getInlineToolStateNodes = (toolCallId: string): ReactNode[] => {
+		const inlineNodes: ReactNode[] = [];
+		const activeSubagent = activeSubagentsByToolCallId?.get(toolCallId);
+		if (activeSubagent) {
+			inlineNodes.push(
+				<SubagentExecutionMessage
+					key={`${message.id}-subagent-${toolCallId}`}
+					inline
+					subagents={[[toolCallId, activeSubagent]]}
+				/>,
+			);
+		}
+
+		if (
+			!didRenderPendingPlanApproval &&
+			pendingPlanApproval &&
+			pendingPlanToolCallId &&
+			pendingPlanToolCallId === toolCallId &&
+			onPlanRespond
+		) {
+			didRenderPendingPlanApproval = true;
+			inlineNodes.push(
+				<PendingPlanApprovalMessage
+					key={`${message.id}-pending-plan-${toolCallId}`}
+					planApproval={pendingPlanApproval}
+					isSubmitting={isPlanSubmitting}
+					onRespond={onPlanRespond}
+					inline
+				/>,
+			);
+		}
+
+		return inlineNodes;
+	};
 	for (let partIndex = 0; partIndex < message.content.length; partIndex++) {
 		const part = message.content[partIndex];
 
@@ -164,6 +223,7 @@ export function AssistantMessage({
 					workspaceCwd={workspaceCwd}
 				/>,
 			);
+			nodes.push(...getInlineToolStateNodes(part.id));
 
 			if (resultIndex === partIndex + 1) {
 				partIndex++;
@@ -186,6 +246,7 @@ export function AssistantMessage({
 					workspaceCwd={workspaceCwd}
 				/>,
 			);
+			nodes.push(...getInlineToolStateNodes(part.id));
 			continue;
 		}
 
@@ -214,6 +275,7 @@ export function AssistantMessage({
 				workspaceCwd={workspaceCwd}
 			/>,
 		);
+		nodes.push(...getInlineToolStateNodes(previewPart.toolCallId));
 	}
 
 	return (

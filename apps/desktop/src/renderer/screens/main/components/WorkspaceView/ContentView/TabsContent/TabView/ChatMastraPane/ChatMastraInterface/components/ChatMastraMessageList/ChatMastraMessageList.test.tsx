@@ -88,7 +88,7 @@ mock.module("./components/MessageScrollbackRail", () => ({
 }));
 
 mock.module("./components/SubagentExecutionMessage", () => ({
-	SubagentExecutionMessage: () => null,
+	SubagentExecutionMessage: () => <div>SUBAGENT_EXECUTION_MESSAGE</div>,
 }));
 
 mock.module("./components/PendingApprovalMessage", () => ({
@@ -96,7 +96,7 @@ mock.module("./components/PendingApprovalMessage", () => ({
 }));
 
 mock.module("./components/PendingPlanApprovalMessage", () => ({
-	PendingPlanApprovalMessage: () => null,
+	PendingPlanApprovalMessage: () => <div>PENDING_PLAN_APPROVAL_MESSAGE</div>,
 }));
 
 mock.module("./components/PendingQuestionMessage", () => ({
@@ -246,5 +246,42 @@ describe("ChatMastraMessageList", () => {
 		expect(html).not.toContain("interrupted snapshot text");
 		expect(html).not.toContain("Interrupted");
 		expect(html).not.toContain("Response stopped");
+	});
+
+	it("does not render standalone pending-plan or subagent blocks at list level", () => {
+		const html = renderListHtml({
+			messages: [
+				{
+					id: "assistant-plan-1",
+					role: "assistant",
+					content: [
+						{
+							type: "tool_call",
+							id: "tool-call-1",
+							name: "submit_plan",
+							args: {},
+						},
+					],
+					createdAt: new Date("2026-03-03T00:00:01.000Z"),
+				},
+			] as never,
+			activeSubagents: new Map([
+				[
+					"tool-call-1",
+					{
+						status: "running",
+						task: "Run tests",
+					},
+				],
+			]) as never,
+			pendingPlanApproval: {
+				planId: "tool-call-1",
+				title: "Implementation plan",
+				plan: "Do the thing",
+			} as never,
+		});
+
+		expect(html).not.toContain("SUBAGENT_EXECUTION_MESSAGE");
+		expect(html).not.toContain("PENDING_PLAN_APPROVAL_MESSAGE");
 	});
 });
