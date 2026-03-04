@@ -27,6 +27,7 @@ import {
 	useState,
 } from "react";
 import { HiMiniAtSymbol } from "react-icons/hi2";
+import { useDebouncedValue } from "renderer/hooks/useDebouncedValue";
 import { getFileIcon } from "renderer/screens/main/components/WorkspaceView/RightSidebar/FilesView/utils";
 
 const MAX_RESULTS = 20;
@@ -86,17 +87,18 @@ export function MentionProvider({
 			setOpen(true);
 		}
 	}, [textInput.value]);
+	const debouncedSearchQuery = useDebouncedValue(searchQuery.trim(), 120);
 
 	// File search via chatService (IPC to main process)
 	const { data: fileResults } = chatServiceTrpc.workspace.searchFiles.useQuery(
 		{
 			rootPath: cwd,
-			query: searchQuery,
+			query: debouncedSearchQuery,
 			includeHidden: false,
 			limit: MAX_RESULTS,
 		},
 		{
-			enabled: open && searchQuery.length > 0 && !!cwd,
+			enabled: open && debouncedSearchQuery.length > 0 && !!cwd,
 			staleTime: 1000,
 			placeholderData: (previous) => previous ?? [],
 		},
