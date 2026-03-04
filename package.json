@@ -47,6 +47,22 @@
 	"resolutions": {
 		"mastracode": "https://github.com/superset-sh/mastra/releases/download/mastracode-v0.4.0-superset.11/mastracode-0.4.0-superset.11.tgz"
 	},
+	"overrides": {
+		"@isaacs/brace-expansion": "5.0.1",
+		"@modelcontextprotocol/sdk": "1.27.1",
+		"ajv": "8.18.0",
+		"axios": "1.13.6",
+		"basic-ftp": "5.2.0",
+		"esbuild": "0.27.3",
+		"hono": "4.12.5",
+		"markdown-it": "14.1.1",
+		"minimatch": "10.2.4",
+		"next": "16.1.6",
+		"qs": "6.15.0",
+		"rollup": "4.59.0",
+		"tar": "7.5.9",
+		"terser-webpack-plugin": "5.3.17"
+	},
 	"patchedDependencies": {
 		"@durable-streams/state@0.2.1": "patches/@durable-streams%2Fstate@0.2.1.patch"
 	}

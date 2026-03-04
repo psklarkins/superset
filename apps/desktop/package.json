@@ -148,7 +148,7 @@
 		"lowdb": "^7.0.1",
 		"lowlight": "^3.3.0",
 		"lucide-react": "^0.563.0",
-		"mastracode": "^0.4.0",
+		"mastracode": "https://github.com/superset-sh/mastra/releases/download/mastracode-v0.4.0-superset.11/mastracode-0.4.0-superset.11.tgz",
 		"monaco-editor": "^0.55.1",
 		"nanoid": "^5.1.6",
 		"node-addon-api": "^7.1.0",

@@ -19,7 +19,7 @@
 		"@mastra/core": "^1.3.0",
 		"@mastra/memory": "^1.2.0",
 		"cheerio": "^1.2.0",
-		"mastracode": "^0.4.0",
+		"mastracode": "https://github.com/superset-sh/mastra/releases/download/mastracode-v0.4.0-superset.11/mastracode-0.4.0-superset.11.tgz",
 		"zod": "^4.3.5"
 	},
 	"devDependencies": {

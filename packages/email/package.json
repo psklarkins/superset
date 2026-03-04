@@ -2,12 +2,12 @@
 	"name": "@superset/email",
 	"version": "0.1.0",
 	"devDependencies": {
-		"@react-email/preview-server": "5.0.7",
+		"@react-email/preview-server": "5.2.9",
 		"@superset/typescript": "workspace:*",
 		"@types/node": "^24.9.1",
 		"@types/react": "~19.2.2",
 		"@types/tailwindcss": "^3.1.0",
-		"react-email": "5.0.7",
+		"react-email": "5.2.9",
 		"typescript": "^5.9.3"
 	},
 	"exports": {

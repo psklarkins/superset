@@ -93,7 +93,7 @@
 		"@types/node": "^24.9.1",
 		"@types/react": "~19.2.2",
 		"babel-preset-expo": "~55.0.0",
-		"expo-mcp": "~0.2.1",
+		"expo-mcp": "~0.2.4",
 		"typescript": "^5.9.3"
 	},
 	"private": true

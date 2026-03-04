@@ -286,6 +286,12 @@ echo wrapper
 		mkdirSync(homeDir, { recursive: true });
 		mkdirSync(systemBinDir, { recursive: true });
 
+		// Force deterministic PATH after /etc/profile is sourced by the rcfile.
+		writeFileSync(
+			path.join(homeDir, ".bash_profile"),
+			`export PATH="${systemBinDir}:/usr/bin:/bin"\n`,
+		);
+
 		writeFileSync(
 			path.join(systemBinDir, "claude"),
 			`#!/usr/bin/env bash
@@ -324,6 +330,12 @@ echo system
 		mkdirSync(homeDir, { recursive: true });
 		mkdirSync(systemBinDir, { recursive: true });
 		mkdirSync(wrapperBinDir, { recursive: true });
+
+		// Force deterministic PATH after /etc/profile is sourced by the rcfile.
+		writeFileSync(
+			path.join(homeDir, ".bash_profile"),
+			`export PATH="${systemBinDir}:/usr/bin:/bin"\n`,
+		);
 
 		writeFileSync(
 			path.join(systemBinDir, "claude"),
