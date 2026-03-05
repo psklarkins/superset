@@ -323,22 +323,23 @@ function WorkspacePage() {
 		{ enabled: !!projectId },
 	);
 	const utils = electronTrpc.useUtils();
-	const openInApp = electronTrpc.external.openInApp.useMutation({
-		onSuccess: () => {
-			if (projectId) {
-				utils.projects.getDefaultApp.invalidate({ projectId });
-			}
-		},
-	});
+	const { mutate: mutateOpenInApp } =
+		electronTrpc.external.openInApp.useMutation({
+			onSuccess: () => {
+				if (projectId) {
+					utils.projects.getDefaultApp.invalidate({ projectId });
+				}
+			},
+		});
 	const handleOpenInApp = useCallback(() => {
 		if (workspace?.worktreePath && defaultApp) {
-			openInApp.mutate({
+			mutateOpenInApp({
 				path: workspace.worktreePath,
 				app: defaultApp,
 				projectId,
 			});
 		}
-	}, [workspace?.worktreePath, defaultApp, openInApp, projectId]);
+	}, [workspace?.worktreePath, defaultApp, mutateOpenInApp, projectId]);
 	useAppHotkey("OPEN_IN_APP", handleOpenInApp, undefined, [handleOpenInApp]);
 
 	// Copy path shortcut
