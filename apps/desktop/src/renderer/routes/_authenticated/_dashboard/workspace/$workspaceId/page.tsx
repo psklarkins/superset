@@ -541,6 +541,7 @@ function WorkspacePage() {
 					/>
 				) : (
 					<WorkspaceLayout
+						defaultExternalApp={defaultApp}
 						onOpenInApp={handleOpenInApp}
 						onOpenQuickOpen={handleQuickOpen}
 					/>

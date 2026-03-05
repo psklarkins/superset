@@ -1,3 +1,4 @@
+import type { ExternalApp } from "@superset/local-db";
 import {
 	MAX_SIDEBAR_WIDTH,
 	MIN_SIDEBAR_WIDTH,
@@ -11,11 +12,13 @@ import { useBrowserLifecycle } from "../hooks/useBrowserLifecycle";
 import { RightSidebar } from "../RightSidebar";
 
 interface WorkspaceLayoutProps {
+	defaultExternalApp?: ExternalApp | null;
 	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
 export function WorkspaceLayout({
+	defaultExternalApp,
 	onOpenInApp,
 	onOpenQuickOpen,
 }: WorkspaceLayoutProps) {
@@ -38,6 +41,7 @@ export function WorkspaceLayout({
 					<ChangesContent />
 				) : (
 					<ContentView
+						defaultExternalApp={defaultExternalApp}
 						onOpenInApp={onOpenInApp}
 						onOpenQuickOpen={onOpenQuickOpen}
 					/>

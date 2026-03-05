@@ -1,3 +1,4 @@
+import type { ExternalApp } from "@superset/local-db";
 import { FEATURE_FLAGS } from "@superset/shared/constants";
 import { useParams } from "@tanstack/react-router";
 import { useFeatureFlagEnabled } from "posthog-js/react";
@@ -6,6 +7,7 @@ import type { IconType } from "react-icons";
 import { BsTerminalPlus } from "react-icons/bs";
 import { LuExternalLink, LuSearch } from "react-icons/lu";
 import { TbMessageCirclePlus, TbWorld } from "react-icons/tb";
+import { getAppOption } from "renderer/components/OpenInExternalDropdown";
 import { useHotkeyDisplay } from "renderer/stores/hotkeys";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { useTabsWithPresets } from "renderer/stores/tabs/useTabsWithPresets";
@@ -14,6 +16,7 @@ import supersetEmptyStateWordmark from "./assets/superset-empty-state-wordmark.s
 import { EmptyTabActionButton } from "./components/EmptyTabActionButton";
 
 interface EmptyTabViewProps {
+	defaultExternalApp?: ExternalApp | null;
 	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
@@ -27,6 +30,7 @@ interface EmptyTabAction {
 }
 
 export function EmptyTabView({
+	defaultExternalApp,
 	onOpenInApp,
 	onOpenQuickOpen,
 }: EmptyTabViewProps) {
@@ -57,6 +61,13 @@ export function EmptyTabView({
 		addBrowserTab(workspaceId);
 	}, [addBrowserTab, workspaceId]);
 
+	const openInActionLabel = useMemo(() => {
+		if (!defaultExternalApp) return "Open Externally";
+		const appOption = getAppOption(defaultExternalApp);
+		const appName = appOption?.displayLabel ?? appOption?.label;
+		return appName ? `Open in ${appName}` : "Open Externally";
+	}, [defaultExternalApp]);
+
 	const actions = useMemo<EmptyTabAction[]>(() => {
 		const baseActions: EmptyTabAction[] = [
 			{
@@ -67,13 +78,6 @@ export function EmptyTabView({
 				onClick: handleShowTerminal,
 			},
 			{
-				id: "search-files",
-				label: "Search Files",
-				display: quickOpenDisplay,
-				icon: LuSearch,
-				onClick: onOpenQuickOpen,
-			},
-			{
 				id: "open-browser",
 				label: "Open Browser",
 				display: newBrowserDisplay,
@@ -82,10 +86,17 @@ export function EmptyTabView({
 			},
 			{
 				id: "open-in-app",
-				label: "Open Externally",
+				label: openInActionLabel,
 				display: openInAppDisplay,
 				icon: LuExternalLink,
 				onClick: onOpenInApp,
+			},
+			{
+				id: "search-files",
+				label: "Search Files",
+				display: quickOpenDisplay,
+				icon: LuSearch,
+				onClick: onOpenQuickOpen,
 			},
 		];
 
@@ -108,6 +119,7 @@ export function EmptyTabView({
 		newBrowserDisplay,
 		newChatDisplay,
 		newGroupDisplay,
+		openInActionLabel,
 		onOpenInApp,
 		onOpenQuickOpen,
 		openInAppDisplay,

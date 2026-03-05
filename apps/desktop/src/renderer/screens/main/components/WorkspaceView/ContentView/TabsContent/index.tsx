@@ -1,3 +1,4 @@
+import type { ExternalApp } from "@superset/local-db";
 import { useParams } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTabsStore } from "renderer/stores/tabs/store";
@@ -6,11 +7,13 @@ import { EmptyTabView } from "./EmptyTabView";
 import { TabView } from "./TabView";
 
 interface TabsContentProps {
+	defaultExternalApp?: ExternalApp | null;
 	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
 export function TabsContent({
+	defaultExternalApp,
 	onOpenInApp,
 	onOpenQuickOpen,
 }: TabsContentProps) {
@@ -46,6 +49,7 @@ export function TabsContent({
 				<TabView tab={tabToRender} />
 			) : (
 				<EmptyTabView
+					defaultExternalApp={defaultExternalApp}
 					onOpenInApp={onOpenInApp}
 					onOpenQuickOpen={onOpenQuickOpen}
 				/>
