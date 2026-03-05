@@ -103,7 +103,10 @@ export const organizations = authSchema.table(
 	},
 	(table) => [
 		uniqueIndex("organizations_slug_idx").on(table.slug),
-		index("organizations_allowed_domains_idx").using("gin", table.allowedDomains),
+		index("organizations_allowed_domains_idx").using(
+			"gin",
+			table.allowedDomains,
+		),
 	],
 );
 
