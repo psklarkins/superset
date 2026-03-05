@@ -330,20 +330,16 @@ function WorkspacePage() {
 			}
 		},
 	});
-	useAppHotkey(
-		"OPEN_IN_APP",
-		() => {
-			if (workspace?.worktreePath && defaultApp) {
-				openInApp.mutate({
-					path: workspace.worktreePath,
-					app: defaultApp,
-					projectId,
-				});
-			}
-		},
-		undefined,
-		[workspace?.worktreePath, defaultApp, projectId],
-	);
+	const handleOpenInApp = useCallback(() => {
+		if (workspace?.worktreePath && defaultApp) {
+			openInApp.mutate({
+				path: workspace.worktreePath,
+				app: defaultApp,
+				projectId,
+			});
+		}
+	}, [workspace?.worktreePath, defaultApp, openInApp, projectId]);
+	useAppHotkey("OPEN_IN_APP", handleOpenInApp, undefined, [handleOpenInApp]);
 
 	// Copy path shortcut
 	const copyPath = electronTrpc.external.copyPath.useMutation();
@@ -544,7 +540,10 @@ function WorkspacePage() {
 						isInterrupted={hasIncompleteInit && !isInitializing}
 					/>
 				) : (
-					<WorkspaceLayout onOpenQuickOpen={handleQuickOpen} />
+					<WorkspaceLayout
+						onOpenInApp={handleOpenInApp}
+						onOpenQuickOpen={handleQuickOpen}
+					/>
 				)}
 			</div>
 			<CommandPalette

@@ -11,10 +11,14 @@ import { useBrowserLifecycle } from "../hooks/useBrowserLifecycle";
 import { RightSidebar } from "../RightSidebar";
 
 interface WorkspaceLayoutProps {
+	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
-export function WorkspaceLayout({ onOpenQuickOpen }: WorkspaceLayoutProps) {
+export function WorkspaceLayout({
+	onOpenInApp,
+	onOpenQuickOpen,
+}: WorkspaceLayoutProps) {
 	useBrowserLifecycle();
 	const {
 		isSidebarOpen,
@@ -33,7 +37,10 @@ export function WorkspaceLayout({ onOpenQuickOpen }: WorkspaceLayoutProps) {
 				{isExpanded ? (
 					<ChangesContent />
 				) : (
-					<ContentView onOpenQuickOpen={onOpenQuickOpen} />
+					<ContentView
+						onOpenInApp={onOpenInApp}
+						onOpenQuickOpen={onOpenQuickOpen}
+					/>
 				)}
 			</div>
 			{isSidebarOpen && (

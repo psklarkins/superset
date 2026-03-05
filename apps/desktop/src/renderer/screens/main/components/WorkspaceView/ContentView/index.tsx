@@ -7,10 +7,14 @@ import { TabsContent } from "./TabsContent";
 import { GroupStrip } from "./TabsContent/GroupStrip";
 
 interface ContentViewProps {
+	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
-export function ContentView({ onOpenQuickOpen }: ContentViewProps) {
+export function ContentView({
+	onOpenInApp,
+	onOpenQuickOpen,
+}: ContentViewProps) {
 	const isSidebarOpen = useSidebarStore((s) => s.isSidebarOpen);
 	const { data: showPresetsBar } =
 		electronTrpc.settings.getShowPresetsBar.useQuery();
@@ -23,7 +27,10 @@ export function ContentView({ onOpenQuickOpen }: ContentViewProps) {
 				<GroupStrip />
 			</ContentHeader>
 			{showPresetsBar && <PresetsBar />}
-			<TabsContent onOpenQuickOpen={onOpenQuickOpen} />
+			<TabsContent
+				onOpenInApp={onOpenInApp}
+				onOpenQuickOpen={onOpenQuickOpen}
+			/>
 		</div>
 	);
 }

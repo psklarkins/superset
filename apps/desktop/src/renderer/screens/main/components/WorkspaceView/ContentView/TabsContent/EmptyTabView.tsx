@@ -4,7 +4,7 @@ import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useCallback, useMemo } from "react";
 import type { IconType } from "react-icons";
 import { BsTerminalPlus } from "react-icons/bs";
-import { LuSearch } from "react-icons/lu";
+import { LuExternalLink, LuSearch } from "react-icons/lu";
 import { TbMessageCirclePlus, TbWorld } from "react-icons/tb";
 import { useHotkeyDisplay } from "renderer/stores/hotkeys";
 import { useTabsStore } from "renderer/stores/tabs/store";
@@ -14,6 +14,7 @@ import supersetEmptyStateWordmark from "./assets/superset-empty-state-wordmark.s
 import { EmptyTabActionButton } from "./components/EmptyTabActionButton";
 
 interface EmptyTabViewProps {
+	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
@@ -25,7 +26,10 @@ interface EmptyTabAction {
 	onClick: () => void;
 }
 
-export function EmptyTabView({ onOpenQuickOpen }: EmptyTabViewProps) {
+export function EmptyTabView({
+	onOpenInApp,
+	onOpenQuickOpen,
+}: EmptyTabViewProps) {
 	const { workspaceId } = useParams({
 		from: "/_authenticated/_dashboard/workspace/$workspaceId/",
 	});
@@ -39,6 +43,7 @@ export function EmptyTabView({ onOpenQuickOpen }: EmptyTabViewProps) {
 	const newChatDisplay = useHotkeyDisplay("NEW_CHAT");
 	const quickOpenDisplay = useHotkeyDisplay("QUICK_OPEN");
 	const newBrowserDisplay = useHotkeyDisplay("NEW_BROWSER");
+	const openInAppDisplay = useHotkeyDisplay("OPEN_IN_APP");
 
 	const handleShowTerminal = useCallback(() => {
 		addTab(workspaceId);
@@ -75,6 +80,13 @@ export function EmptyTabView({ onOpenQuickOpen }: EmptyTabViewProps) {
 				icon: TbWorld,
 				onClick: handleOpenBrowser,
 			},
+			{
+				id: "open-in-app",
+				label: "Open Externally",
+				display: openInAppDisplay,
+				icon: LuExternalLink,
+				onClick: onOpenInApp,
+			},
 		];
 
 		if (hasAiChat) {
@@ -96,7 +108,9 @@ export function EmptyTabView({ onOpenQuickOpen }: EmptyTabViewProps) {
 		newBrowserDisplay,
 		newChatDisplay,
 		newGroupDisplay,
+		onOpenInApp,
 		onOpenQuickOpen,
+		openInAppDisplay,
 		quickOpenDisplay,
 	]);
 

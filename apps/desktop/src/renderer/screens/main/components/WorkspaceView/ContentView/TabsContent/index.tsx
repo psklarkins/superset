@@ -6,10 +6,14 @@ import { EmptyTabView } from "./EmptyTabView";
 import { TabView } from "./TabView";
 
 interface TabsContentProps {
+	onOpenInApp: () => void;
 	onOpenQuickOpen: () => void;
 }
 
-export function TabsContent({ onOpenQuickOpen }: TabsContentProps) {
+export function TabsContent({
+	onOpenInApp,
+	onOpenQuickOpen,
+}: TabsContentProps) {
 	const { workspaceId: activeWorkspaceId } = useParams({ strict: false });
 	const allTabs = useTabsStore((s) => s.tabs);
 	const activeTabIds = useTabsStore((s) => s.activeTabIds);
@@ -41,7 +45,10 @@ export function TabsContent({ onOpenQuickOpen }: TabsContentProps) {
 			{tabToRender ? (
 				<TabView tab={tabToRender} />
 			) : (
-				<EmptyTabView onOpenQuickOpen={onOpenQuickOpen} />
+				<EmptyTabView
+					onOpenInApp={onOpenInApp}
+					onOpenQuickOpen={onOpenQuickOpen}
+				/>
 			)}
 		</div>
 	);
