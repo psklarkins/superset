@@ -62,10 +62,10 @@ export function EmptyTabView({
 	}, [addBrowserTab, workspaceId]);
 
 	const openInActionLabel = useMemo(() => {
-		if (!defaultExternalApp) return "Open Externally";
+		if (!defaultExternalApp) return null;
 		const appOption = getAppOption(defaultExternalApp);
 		const appName = appOption?.displayLabel ?? appOption?.label;
-		return appName ? `Open in ${appName}` : "Open Externally";
+		return appName ? `Open in ${appName}` : null;
 	}, [defaultExternalApp]);
 
 	const actions = useMemo<EmptyTabAction[]>(() => {
@@ -77,31 +77,10 @@ export function EmptyTabView({
 				icon: BsTerminalPlus,
 				onClick: handleShowTerminal,
 			},
-			{
-				id: "open-browser",
-				label: "Open Browser",
-				display: newBrowserDisplay,
-				icon: TbWorld,
-				onClick: handleOpenBrowser,
-			},
-			{
-				id: "open-in-app",
-				label: openInActionLabel,
-				display: openInAppDisplay,
-				icon: LuExternalLink,
-				onClick: onOpenInApp,
-			},
-			{
-				id: "search-files",
-				label: "Search Files",
-				display: quickOpenDisplay,
-				icon: LuSearch,
-				onClick: onOpenQuickOpen,
-			},
 		];
 
 		if (hasAiChat) {
-			baseActions.splice(1, 0, {
+			baseActions.push({
 				id: "new-agent",
 				label: "Open Chat",
 				display: newChatDisplay,
@@ -109,6 +88,32 @@ export function EmptyTabView({
 				onClick: handleNewAgent,
 			});
 		}
+
+		baseActions.push({
+			id: "open-browser",
+			label: "Open Browser",
+			display: newBrowserDisplay,
+			icon: TbWorld,
+			onClick: handleOpenBrowser,
+		});
+
+		if (openInActionLabel) {
+			baseActions.push({
+				id: "open-in-app",
+				label: openInActionLabel,
+				display: openInAppDisplay,
+				icon: LuExternalLink,
+				onClick: onOpenInApp,
+			});
+		}
+
+		baseActions.push({
+			id: "search-files",
+			label: "Search Files",
+			display: quickOpenDisplay,
+			icon: LuSearch,
+			onClick: onOpenQuickOpen,
+		});
 
 		return baseActions;
 	}, [
