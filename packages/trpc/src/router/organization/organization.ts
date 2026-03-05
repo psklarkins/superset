@@ -288,61 +288,6 @@ export const organizationRouter = {
 			}
 		}),
 
-	updateAllowedDomains: protectedProcedure
-		.input(
-			z.object({
-				organizationId: z.string().uuid(),
-				allowedDomains: z
-					.array(
-						z
-							.string()
-							.toLowerCase()
-							.regex(
-								/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/,
-								"Invalid domain format",
-							),
-					)
-					.max(20, "Maximum 20 domains allowed"),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const membership = await findOrgMembership({
-				userId: ctx.session.user.id,
-				organizationId: input.organizationId,
-			});
-
-			if (!membership || membership.role !== "owner") {
-				throw new TRPCError({
-					code: "FORBIDDEN",
-					message: "Only owners can manage allowed domains",
-				});
-			}
-
-			if (input.allowedDomains.length > 0) {
-				const conflicting = await db.query.organizations.findFirst({
-					where: and(
-						sql`${organizations.allowedDomains} && ARRAY[${sql.join(input.allowedDomains.map((d) => sql`${d}`), sql`,`)}]::text[]`,
-						ne(organizations.id, input.organizationId),
-					),
-				});
-				if (conflicting) {
-					throw new TRPCError({
-						code: "CONFLICT",
-						message:
-							"One or more domains are already claimed by another organization",
-					});
-				}
-			}
-
-			const [updated] = await db
-				.update(organizations)
-				.set({ allowedDomains: input.allowedDomains })
-				.where(eq(organizations.id, input.organizationId))
-				.returning();
-
-			return updated;
-		}),
-
 	delete: protectedProcedure
 		.input(z.string().uuid())
 		.mutation(async ({ input }) => {
